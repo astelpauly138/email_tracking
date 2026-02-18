@@ -1,40 +1,31 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import Response
-import base64
-import json
 from supabase_client import supabase
+import base64
 
 app = FastAPI()
 
 @app.get("/track")
-async def track_email(data: str):
+async def track_email(
+    u: str,
+    c: str,
+    l: str
+):
 
-    try:
-        # Decode Base64 safely
-        padded = data + "=" * (-len(data) % 4)
-        decoded_json = base64.urlsafe_b64decode(padded).decode()
-        decoded = json.loads(decoded_json)
+    print("User:", u)
+    print("Campaign:", c)
+    print("Lead:", l)
 
-        user_id = decoded["u"]
-        campaign_id = decoded["c"]
-        lead_id = decoded["l"]
+    response = supabase.table("email_events") \
+        .update({"event_type": "opened"}) \
+        .eq("lead_id", l) \
+        .eq("user_id", u) \
+        .eq("campaign_id", c) \
+        .execute()
 
-        print("Decoded:", decoded)
+    print("Supabase response:", response.data)
 
-        # Update event_type to opened
-        response = supabase.table("email_events") \
-            .update({"event_type": "opened"}) \
-            .eq("lead_id", lead_id) \
-            .eq("user_id", user_id) \
-            .eq("campaign_id", campaign_id) \
-            .execute()
-
-        print("Supabase response:", response)
-
-    except Exception as e:
-        print("ERROR:", str(e))
-
-    # Return 1x1 pixel
+    # 1x1 pixel
     pixel = base64.b64decode(
         "R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
     )
