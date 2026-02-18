@@ -20,7 +20,7 @@ async def track_email(data: str):
 
     # ✅ Update only status
     response = supabase.table("email_events") \
-        .update({"status": "opened"}) \
+        .update({"event_type": "opened"}) \
         .eq("lead_id", lead_id) \
         .eq("user_id", user_id) \
         .eq("campaign_id", campaign_id) \
