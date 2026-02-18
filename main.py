@@ -34,3 +34,6 @@ async def track_email(data: str):
     )
 
     return Response(content=pixel, media_type="image/gif")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
