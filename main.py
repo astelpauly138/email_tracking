@@ -1,20 +1,32 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.responses import Response
-from datetime import datetime
 import base64
+import json
+from supabase_client import supabase
 
 app = FastAPI()
 
 @app.get("/track")
-async def track_email(request: Request, u: str, c: str, l: str):
+async def track_email(data: str):
 
-    print("Email Opened!")
-    print("User ID:", u)
-    print("Campaign ID:", c)
-    print("Lead ID:", l)
-    print("Time:", datetime.utcnow())
-    print("IP:", request.client.host)
-    print("User-Agent:", request.headers.get("user-agent"))
+    # Decode hidden UUIDs
+    decoded = json.loads(
+        base64.urlsafe_b64decode(data.encode()).decode()
+    )
+
+    user_id = decoded["u"]
+    campaign_id = decoded["c"]
+    lead_id = decoded["l"]
+
+    # ✅ Update only status
+    response = supabase.table("email_events") \
+        .update({"status": "opened"}) \
+        .eq("lead_id", lead_id) \
+        .eq("user_id", user_id) \
+        .eq("campaign_id", campaign_id) \
+        .execute()
+
+    print("Updated:", response.data)
 
     # Return 1x1 transparent pixel
     pixel = base64.b64decode(
@@ -22,6 +34,3 @@ async def track_email(request: Request, u: str, c: str, l: str):
     )
 
     return Response(content=pixel, media_type="image/gif")
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
